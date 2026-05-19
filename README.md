@@ -2,6 +2,8 @@
 
 日本著作権保護期間計算ツール（`index.html`）です。ブラウザだけで動く静的ページとして実装されています。
 
+URL: [https://nehemiaharchives.github.io/copyrightcalc/](https://nehemiaharchives.github.io/copyrightcalc/)
+
 ## Features
 
 - 著作物タイプの選択
