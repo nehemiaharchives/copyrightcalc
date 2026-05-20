@@ -152,12 +152,12 @@ button:hover{
 </div>
 
 <div class="section" id="deathYearSection">
-<label>著作者死亡年(新法適用境界：1967年)</label>
+<label id="deathYearLabel">著作者死亡年(新法適用境界：1967年)</label>
 <input type="number" id="deathYear" placeholder="例: 1970">
 </div>
 
 <div class="section hidden" id="publishYearSection">
-<label>公表年(新法適用境界：1967年)</label>
+<label id="publishYearLabel">公表年(新法適用境界：1967年)</label>
 <input type="number" id="publishYear" placeholder="例: 1965">
 </div>
 
@@ -170,7 +170,7 @@ button:hover{
 </div>
 
 <div class="section hidden" id="movieDeathYearSection">
-<label>映画著作者死亡年（映画・個人名義モード時）</label>
+<label id="movieDeathYearLabel">映画著作者死亡年（映画・個人名義モード時）</label>
 <input type="number" id="movieDeathYear" placeholder="例: 1977">
 </div>
 
@@ -226,6 +226,9 @@ const warBonusSection = document.getElementById("warBonusSection");
 const movieModeSection = document.getElementById("movieModeSection");
 const movieDeathYearSection = document.getElementById("movieDeathYearSection");
 const movieOldLawMode = document.getElementById("movieOldLawMode");
+const deathYearLabel = document.getElementById("deathYearLabel");
+const publishYearLabel = document.getElementById("publishYearLabel");
+const movieDeathYearLabel = document.getElementById("movieDeathYearLabel");
 
 workType.addEventListener("change", updateUI);
 foreignWork.addEventListener("change", updateUI);
@@ -234,22 +237,28 @@ movieOldLawMode.addEventListener("change", updateUI);
 function updateUI(){
 
     const type = workType.value;
+    const isMovieIndividual = type === "movie" && movieOldLawMode.value === "individual";
 
     if(type === "individual"){
+        deathYearLabel.textContent = "著作者死亡年(新法適用境界：1967年)";
         deathYearSection.classList.remove("hidden");
         publishYearSection.classList.add("hidden");
         movieModeSection.classList.add("hidden");
         movieDeathYearSection.classList.add("hidden");
     }else if(type === "movie"){
+        publishYearLabel.textContent = "公表年（映画・その他モードの新法適用境界：1985年）";
         deathYearSection.classList.add("hidden");
         publishYearSection.classList.remove("hidden");
         movieModeSection.classList.remove("hidden");
-        if(movieOldLawMode.value === "individual"){
+        if(isMovieIndividual){
+            movieDeathYearLabel.textContent = "映画著作者死亡年（新法適用境界：1980年）";
             movieDeathYearSection.classList.remove("hidden");
         }else{
+            movieDeathYearLabel.textContent = "映画著作者死亡年（映画・個人名義モード時）";
             movieDeathYearSection.classList.add("hidden");
         }
     }else{
+        publishYearLabel.textContent = "公表年(新法適用境界：1967年)";
         deathYearSection.classList.add("hidden");
         publishYearSection.classList.remove("hidden");
         movieModeSection.classList.add("hidden");
