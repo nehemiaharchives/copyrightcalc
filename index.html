@@ -161,6 +161,19 @@ button:hover{
 <input type="number" id="publishYear" placeholder="例: 1965">
 </div>
 
+<div class="section hidden" id="movieModeSection">
+<label>映画（旧法）判定モード</label>
+<select id="movieOldLawMode">
+    <option value="individual">実名の個人名義（旧法: 死後38年）</option>
+    <option value="publication">その他（旧法: 公表後33年）</option>
+</select>
+</div>
+
+<div class="section hidden" id="movieDeathYearSection">
+<label>映画著作者死亡年（映画・個人名義モード時）</label>
+<input type="number" id="movieDeathYear" placeholder="例: 1977">
+</div>
+
 <div class="section">
 <label>外国著作物か</label>
 <select id="foreignWork">
@@ -202,6 +215,7 @@ button:hover{
 
 </div>
 
+<script src="calc.js"></script>
 <script>
 
 const workType = document.getElementById("workType");
@@ -209,9 +223,13 @@ const deathYearSection = document.getElementById("deathYearSection");
 const publishYearSection = document.getElementById("publishYearSection");
 const foreignWork = document.getElementById("foreignWork");
 const warBonusSection = document.getElementById("warBonusSection");
+const movieModeSection = document.getElementById("movieModeSection");
+const movieDeathYearSection = document.getElementById("movieDeathYearSection");
+const movieOldLawMode = document.getElementById("movieOldLawMode");
 
 workType.addEventListener("change", updateUI);
 foreignWork.addEventListener("change", updateUI);
+movieOldLawMode.addEventListener("change", updateUI);
 
 function updateUI(){
 
@@ -220,9 +238,22 @@ function updateUI(){
     if(type === "individual"){
         deathYearSection.classList.remove("hidden");
         publishYearSection.classList.add("hidden");
+        movieModeSection.classList.add("hidden");
+        movieDeathYearSection.classList.add("hidden");
+    }else if(type === "movie"){
+        deathYearSection.classList.add("hidden");
+        publishYearSection.classList.remove("hidden");
+        movieModeSection.classList.remove("hidden");
+        if(movieOldLawMode.value === "individual"){
+            movieDeathYearSection.classList.remove("hidden");
+        }else{
+            movieDeathYearSection.classList.add("hidden");
+        }
     }else{
         deathYearSection.classList.add("hidden");
         publishYearSection.classList.remove("hidden");
+        movieModeSection.classList.add("hidden");
+        movieDeathYearSection.classList.add("hidden");
     }
 
     if(foreignWork.value === "yes"){
@@ -236,89 +267,47 @@ function calculate(){
 
     const type = workType.value;
     const isForeign = foreignWork.value === "yes";
-
-    let baseYear;
-    let oldExpiration;
-    let newExpiration;
-    let finalExpiration;
-    let logic = "";
-
-    const reformYear = 2018;
+    let baseYear = null;
+    let movieIndividualDeathYear = null;
+    let movieOldLawModeValue = movieOldLawMode.value;
 
     if(type === "individual"){
-
-        baseYear = parseInt(document.getElementById("deathYear").value);
-
-        if(isNaN(baseYear)){
+        baseYear = CopyrightCalc.parseNumber(document.getElementById("deathYear").value);
+        if(baseYear === null){
             alert("死亡年を入力してください");
             return;
         }
-
-        oldExpiration = baseYear + 50;
-        newExpiration = baseYear + 70;
-
-        logic += `個人著作物\n`;
-        logic += `旧法: 死後50年 → ${oldExpiration}年末\n`;
-        logic += `新法: 死後70年 → ${newExpiration}年末\n\n`;
-
     }else{
-
-        baseYear = parseInt(document.getElementById("publishYear").value);
-
-        if(isNaN(baseYear)){
+        baseYear = CopyrightCalc.parseNumber(document.getElementById("publishYear").value);
+        if(baseYear === null){
             alert("公表年を入力してください");
             return;
         }
-
-        oldExpiration = baseYear + 50;
-        newExpiration = baseYear + 70;
-
-        logic += `公表基準著作物\n`;
-        logic += `旧法: 公表後50年 → ${oldExpiration}年末\n`;
-        logic += `新法: 公表後70年 → ${newExpiration}年末\n\n`;
+        if(type !== "movie"){
+            movieOldLawModeValue = "publication";
+        }else if(movieOldLawModeValue === "individual"){
+            movieIndividualDeathYear = CopyrightCalc.parseNumber(document.getElementById("movieDeathYear").value);
+            if(movieIndividualDeathYear === null){
+                alert("映画著作者死亡年を入力してください");
+                return;
+            }
+        }
     }
 
-    /*
-        2018改正経過措置
-        2018時点でまだ保護中なら70年へ延長
-        既に切れていたら復活しない
-    */
+    const warBonusDays = isForeign
+        ? (CopyrightCalc.parseNumber(document.getElementById("warBonusDays").value) ?? 0)
+        : 0;
 
-    if(oldExpiration >= 2018){
+    const calculation = CopyrightCalc.computeExpiration({
+        type,
+        baseYear,
+        isForeign,
+        warBonusDays,
+        movieOldLawMode: movieOldLawModeValue,
+        movieIndividualDeathYear,
+    });
 
-        finalExpiration = newExpiration;
-
-        logic += `2018年改正時点で著作権存続中。\n`;
-        logic += `→ 70年へ延長適用。\n`;
-
-    }else{
-
-        finalExpiration = oldExpiration;
-
-        logic += `2018年改正前に既に消滅済み。\n`;
-        logic += `→ 著作権は復活しない。\n`;
-    }
-
-    let warBonusDays = 0;
-
-    if(isForeign){
-
-        warBonusDays = parseInt(document.getElementById("warBonusDays").value || 0);
-
-        logic += `\n外国著作物\n`;
-        logic += `戦時加算日数: ${warBonusDays}日\n`;
-    }
-
-    const pdYear = finalExpiration + 1;
-
-    let warBonusText = "";
-
-    if(warBonusDays > 0){
-
-        warBonusText =
-            `さらに戦時加算 ${warBonusDays} 日を加味する必要があります。<br>
-             （厳密には日単位計算が必要）`;
-    }
+    const warBonusText = CopyrightCalc.formatWarBonusText(warBonusDays);
 
     const result = document.getElementById("result");
 
@@ -329,19 +318,19 @@ function calculate(){
 
         <p>
         保護期間満了年：
-        <strong>${finalExpiration}年末</strong>
+        <strong>${calculation.finalExpiration}年末</strong>
         </p>
 
         <p>
         パブリックドメイン化：
-        <strong>${pdYear}年1月1日</strong>
+        <strong>${calculation.pdDateText}</strong>
         </p>
 
         <p>${warBonusText}</p>
 
         <div class="logic">
         <strong>判定ロジック</strong><br><br>
-${logic}
+${calculation.logic}
         </div>
     `;
 }
