@@ -239,29 +239,26 @@ function updateUI(){
     const type = workType.value;
     const isMovieIndividual = type === "movie" && movieOldLawMode.value === "individual";
 
-    deathYearLabel.textContent = "著作者死亡年(新法適用境界：1967年)";
-    publishYearLabel.textContent = "公表年(新法適用境界：1967年)";
-    movieDeathYearLabel.textContent = "映画著作者死亡年（映画・個人名義モード時）";
-
     if(type === "individual"){
+        deathYearLabel.textContent = "著作者死亡年(新法適用境界：1967年)";
         deathYearSection.classList.remove("hidden");
         publishYearSection.classList.add("hidden");
         movieModeSection.classList.add("hidden");
         movieDeathYearSection.classList.add("hidden");
     }else if(type === "movie"){
+        publishYearLabel.textContent = "公表年（映画・その他モードの新法適用境界：1985年）";
         deathYearSection.classList.add("hidden");
         publishYearSection.classList.remove("hidden");
         movieModeSection.classList.remove("hidden");
         if(isMovieIndividual){
+            movieDeathYearLabel.textContent = "映画著作者死亡年（新法適用境界：1980年）";
             movieDeathYearSection.classList.remove("hidden");
         }else{
+            movieDeathYearLabel.textContent = "映画著作者死亡年（映画・個人名義モード時）";
             movieDeathYearSection.classList.add("hidden");
         }
-        publishYearLabel.textContent = "公表年（映画・その他モードの新法適用境界：1985年）";
-        if (isMovieIndividual) {
-            movieDeathYearLabel.textContent = "映画著作者死亡年（新法適用境界：1980年）";
-        }
     }else{
+        publishYearLabel.textContent = "公表年(新法適用境界：1967年)";
         deathYearSection.classList.add("hidden");
         publishYearSection.classList.remove("hidden");
         movieModeSection.classList.add("hidden");
